@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="robots" content="all">
+<meta name="referrer" content="always">
+<meta name="renderer" content="webkit">
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta name="format-detection" content="telephone=no"/>
+<meta name="applicable-device" content="pc,mobile"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<meta name="keywords" content="毒鸡汤 ,励志,打鸡血">
+<meta name="description" content="提供随机毒鸡汤。">
+<title>IP.cn - IP 毒鸡汤 | 励志 | 打鸡血</title>
+<link rel="stylesheet" href="/q.css">
+</head>
+<body>
+<div class="wrapper">
+<div class="header">
+<div class="inner">
+<div class="mod-head">
+<div class="bd">
+<div class="logo">
+<center>
+<img src="/xd.jpg" width="560" height="256"/>
+</center>
+<a class="title" href="/">IP.cn 查询网</a>
+<span class="subtitle">IP地址查询<span>
+</div>
+<div class="menu">
+<div class="title">
+
+<span>功能大全</span>
+</div>
+<div class="popup">
+<ul>
+<li><a href="/">IP地址查询</a></li>
+<li><a href="/db/">手机电话归属查询</a></li>
+<li><a href="/qiang.html">域名被墙查询</a></li>
+<li><a href="/beian.html">域名备案查询</a></li>
+<li><a href="/whois.html">域名Whois查询</a></li>
+<li><a href="/shenfenzheng.html">身份证号查询</a></li>
+<li><a href="/kd.html">快递信息查询</a></li>
+<li><a href="/huilv.html">汇率信息查询</a></li>
+<li><a href="/daishou.html">火车票代售点查询</a></li>
+<li><a href="/qishoudian.html">列车时刻查询</a></li>
+<li><a href="/caipiao/">彩票开奖查询</a></li>
+<li><a href="/tiyu/">体育比赛查询</a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="container">
+<div class="inner">
+<div class="module mod-panel">
+<div class="hd"><h3 class="title">毒鸡汤</h3></div>
+<div class="bd">
+<div class="statement">
+<p>要笑着走下去吧，反正来到这个世界上，谁也没打算活着回去。</p>
+</div>
+<p class="text-center"><button class="J_nextOne btn">下一个</button></p>
+</div>
+</div>
+<div class="module mod-navigation">
+<div class="hd"><h3 class="title">常用工具</h3></div>
+<div class="bd">
+<ul>
+<li><a href="/changdu.html">在线转换</a></li>
+<li><a href="/selfcalc.html">在线计算</a></li>
+<li><a href="/tianqi.html">天气预报查询</a></li>
+<li><a href="/laji.html">垃圾分类查询</a></li>
+<li><a href="/fanyi.html">万能翻译</a></li>
+<li><a href="/huilv.html">汇率信息查询</a></li>
+<li><a href="/md5.html">加密解密</a></li>
+<li><a href="/createPwd.html">随机密码</a></li>
+<li><a href="/xingzuo.html">生活工具</a></li>
+<li><a href="/chehao_index.html">车牌号查询</a></li>
+<li><a href="/caipiao/">彩票开奖查询</a></li>
+<li><a href="/tiyu/">体育比赛查询</a></li>
+<li><a href="/djt.html">毒鸡汤</a></li>
+<li><a href="/xyx.html" >笑一笑</a></li>
+</ul>
+</div>
+</div>    </div>
+<script type="text/javascript">
+(function(){
+let $J_nextOne = document.querySelector('.J_nextOne');
+let $content = document.querySelector('.statement p');
+let index = 0;
+let list = [];
+$J_nextOne.addEventListener('click',function(){
+if(!list[index]){
+fetch(`/api/fun/poisonChickenSoup?limit=10`).then(function(response){
+return response.json();
+}).then(function(json){
+if(json.status){
+let data = json.data;
+list = list.concat(data);
+let item = list[index];
+$content.innerText = item.content;
+index++;
+}
+});
+}else{
+let item = list[index];
+$content.innerText = item.content;
+index++;
+}
+});
+})();
+</script>
+</div>
+<div class="footer">
+<div class="inner">
+<div class="mod-foot">
+<div class="bd">
+<p>
+<span>&copy;2006-2025</span>
+<span>厦门时空科技有限公司</span>
+<span>版权所有</span>
+</p>
+<p><a href="https://beian.miit.gov.cn/" target="_blank">闽ICP备20013833号-1</a></p>
+<p>ccc138899@163.com</p>
+</div>
+<a class="goback" href="javascript:;" rel="nofollow">
+<img src="/static/www/image/public/icon-goback.png" width="32" height="32" alt="返回顶部"/>
+</a>
+</div>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+document.addEventListener('click',function(e){
+let $J_link = e.target.closest('.J_link');
+if($J_link){
+let $link = $J_link.querySelector('a');
+$link&&$link.click();
+}
+});
+document.querySelector('.mod-foot .goback').addEventListener('click',function(){
+window.scrollTo({
+top: 0,
+behavior: "smooth"
+});
+});
+</script>
+<div class="hide">
+<script> var _mtj = _mtj || []; (function () { var mtj = document.createElement("script"); mtj.src = "https://node67.aizhantj.com:21233/tjjs/?k=pbuydsbu38w"; var s = document.getElementsByTagName("script")[0]; s.parentNode.insertBefore(mtj, s); })(); </script>        </div>
+</body>
+</html>
