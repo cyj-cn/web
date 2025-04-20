@@ -88,7 +88,7 @@
             // 文件大小限制 (30MB to ensure localStorage compatibility)
             const maxSize = 30 * 1024 * 1024; // 30MB in bytes
             if (file.size > maxSize) {
-                alert('文件大小不能超过10MB！');
+                alert('文件大小不能超过30MB！');
                 fileInput.value = ''; // 清空输入
                 previewSection.classList.add('hidden');
                 return;
