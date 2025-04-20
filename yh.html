@@ -397,5 +397,22 @@
             }
         }
     </script>
+
+<script type="text/javascript">
+document.addEventListener('click',function(e){
+let $J_link = e.target.closest('.J_link');
+if($J_link){
+let $link = $J_link.querySelector('a');
+$link&&$link.click();
+}
+});
+document.querySelector('.mod-foot .goback').addEventListener('click',function(){
+window.scrollTo({
+top: 0,
+behavior: "smooth"
+});
+});
+</script>
+    
 </body>
 </html>
