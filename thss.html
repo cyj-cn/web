@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Echoes of the Celestial Shrine - 动漫风格角色扮演游戏，探索神秘神社，作出选择，与灵魂战斗，托管于GitHub Pages">
+    <meta name="keywords" content="角色扮演游戏,动漫RPG,神社冒险,交互式故事,GitHub Pages">
+    <meta name="author" content="Your Name">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://cdn.tailwindcss.com; script-src 'self'; img-src 'self' data:; media-src 'self'">
+    <title>Echoes of the Celestial Shrine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .header-bg {
+            background-image: url('./sar.jpg');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        .header-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.7);
+            z-index: 1;
+        }
+        .header-bg > * {
+            position: relative;
+            z-index: 2;
+        }
+        .action-card {
+            transition: transform 0.2s ease-in-out;
+            background-image: url('./sanr.jpg');
+            background-size: cover;
+            background-repeat: repeat;
+            opacity: 0.9;
+        }
+        .action-card:hover {
+            transform: scale(1.05);
+        }
+        .modal {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .link-frame {
+            border: 2px solid #1e80e8;
+            border-radius: 8px;
+            padding: 4px;
+            display: inline-block;
+            margin: 4px;
+        }
+        .status-box {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-r from-gray-100 to-gray-200 flex flex-col items-center justify-center min-h-screen">
+    <header class="text-center mb-8 header-bg py-6 rounded-lg w-full max-w-5xl">
+        <h1 class="text-5xl font-extrabold text-gray-800 drop-shadow-lg">天皇神社的回响</h1>
+        <p class="text-gray-600 mt-2 text-lg">动漫风格角色扮演冒险</p>
+        <div class="flex justify-center space-x-4 mt-4">
+            <div class="link-frame">
+                <button onclick="startGame()" class="text-blue-500 hover:underline text-lg">开始游戏</button>
+            </div>
+            <div class="link-frame">
+                <button onclick="loadGame()" class="text-blue-500 hover:underline text-lg">加载游戏</button>
+            </div>
+            <div class="link-frame">
+                <button onclick="resetGame()" class="text-blue-500 hover:underline text-lg">重置游戏</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-4xl" id="gameScreen" style="display: none;">
+        <section class="mb-6">
+            <h2 class="text-2xl font-semibold mb-4" id="locationTitle">神社村</h2>
+            <div class="status-box mb-4">
+                <p><strong>角色:</strong> <span id="playerName">未知</span> (<span id="playerClass">未知</span>)</p>
+                <p><strong>生命值:</strong> <span id="playerHealth">100</span>/100</p>
+                <p><strong>能量:</strong> <span id="playerEnergy">50</span>/50</p>
+                <p><strong>物品:</strong> <span id="playerInventory">无</span></p>
+            </div>
+            <p id="storyText" class="text-gray-700 mb-4">欢迎来到神社村，你是天皇神社的新守护者。选择一个地点开始你的冒险！</p>
+        </section>
+        <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div id="actionButtons"></div>
+        </section>
+    </main>
+
+    <div id="dialogModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden modal">
+        <div class="bg-white p-4 rounded-lg max-w-lg w-full">
+            <p id="dialogText" class="text-gray-700 mb-4"></p>
+            <div id="dialogChoices" class="flex flex-col space-y-2"></div>
+            <button onclick="closeModal()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">关闭</button>
+        </div>
+    </div>
+
+    <div id="combatModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden modal">
+        <div class="bg-white p-4 rounded-lg max-w-lg w-full">
+            <p id="combatText" class="text-gray-700 mb-4"></p>
+            <p><strong>敌人生命值:</strong> <span id="enemyHealth">50</span>/50</p>
+            <div id="combatActions" class="flex flex-col space-y-2"></div>
+            <button onclick="closeModal()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">结束战斗</button>
+        </div>
+    </div>
+
+    <footer class="mt-8 text-gray-600">
+        <span>© 2025 天皇神社的回响. 保留所有权利.</span>
+    </footer>
+
+    <script>
+        let player = {
+            name: '',
+            class: '',
+            health: 100,
+            maxHealth: 100,
+            energy: 50,
+            maxEnergy: 50,
+            inventory: [],
+            location: 'village',
+            storyProgress: 0
+        };
+        let currentEnemy = null;
+
+        const locations = {
+            village: {
+                title: '神社村',
+                description: '欢迎来到神社村，你是天皇神社的新守护者。选择一个地点开始你的冒险！',
+                actions: [
+                    { text: '前往森林', action: () => changeLocation('forest') },
+                    { text: '参观神殿', action: () => changeLocation('temple') },
+                    { text: '探索市场', action: () => changeLocation('market') }
+                ]
+            },
+            forest: {
+                title: '幽暗森林',
+                description: '你进入了幽暗森林，树影婆娑。你听到奇怪的声音。',
+                actions: [
+                    { text: '调查声音', action: () => startDialogue('forestSpirit') },
+                    { text: '采集草药', action: () => addItem('healingHerb') },
+                    { text: '返回村庄', action: () => changeLocation('village') }
+                ]
+            },
+            temple: {
+                title: '天皇神殿',
+                description: '你站在宏伟的神殿前，一位女祭司迎接你。',
+                actions: [
+                    { text: '与女祭司交谈', action: () => startDialogue('priestess') },
+                    { text: '祈祷力量', action: () => boostEnergy(20) },
+                    { text: '返回村庄', action: () => changeLocation('village') }
+                ]
+            },
+            market: {
+                title: '热闹市场',
+                description: '市场熙熙攘攘，商贩叫卖着各种奇物。',
+                actions: [
+                    { text: '购买神秘护符', action: () => addItem('mysticCharm') },
+                    { text: '与流浪者交谈', action: () => startDialogue('rogue') },
+                    { text: '返回村庄', action: () => changeLocation('village') }
+                ]
+            }
+        };
+
+        const dialogues = {
+            forestSpirit: {
+                text: '一个发光的灵魂出现在你面前：“你是来净化神社的吗？”',
+                choices: [
+                    { text: '是的，我来帮忙！', action: () => { player.storyProgress++; showDialogue('很好！击败腐化灵魂吧！', [ { text: '准备战斗', action: () => startCombat('corruptedSpirit') } ]); } },
+                    { text: '不，我只是路过。', action: () => showDialogue('那就离开吧，别打扰我！', []) }
+                ]
+            },
+            priestess: {
+                text: '女祭司说：“神社的力量在衰退，你必须找到灵魂之源。”',
+                choices: [
+                    { text: '灵魂之源在哪里？', action: () => showDialogue('在森林深处，但要小心！', []) },
+                    { text: '我需要什么准备？', action: () => { addItem('healingHerb'); showDialogue('拿上这株草药，祝你好运！', []); } }
+                ]
+            },
+            rogue: {
+                text: '流浪者低语：“市场有危险的交易，你想知道吗？”',
+                choices: [
+                    { text: '告诉我详情！', action: () => showDialogue('有人在卖腐化护符，小心！', []) },
+                    { text: '我不感兴趣。', action: () => showDialogue('随你便，陌生人。', []) }
+                ]
+            }
+        };
+
+        const enemies = {
+            corruptedSpirit: {
+                name: '腐化灵魂',
+                health: 50,
+                maxHealth: 50,
+                attack: 10
+            }
+        };
+
+        const classAbilities = {
+            warrior: { name: '重击', energyCost: 10, damage: 20 },
+            mage: { name: '火球术', energyCost: 15, damage: 25 },
+            healer: { name: '治疗术', energyCost: 10, heal: 20 }
+        };
+
+        function startGame() {
+            player.name = prompt('输入你的角色名称：') || '无名';
+            const classChoice = prompt('选择你的守护者职业：战士、魔法师、治疗师').toLowerCase();
+            player.class = ['warrior', 'mage', 'healer'].includes(classChoice) ? classChoice : 'warrior';
+            player.health = 100;
+            player.energy = 50;
+            player.inventory = [];
+            player.location = 'village';
+            player.storyProgress = 0;
+            updateGameScreen();
+            document.getElementById('gameScreen').style.display = 'block';
+            saveGame();
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('celestialShrineGame');
+            if (saved) {
+                player = JSON.parse(saved);
+                updateGameScreen();
+                document.getElementById('gameScreen').style.display = 'block';
+            } else {
+                alert('没有保存的游戏！');
+            }
+        }
+
+        function resetGame() {
+            if (confirm('确定要重置游戏吗？所有进度将丢失！')) {
+                localStorage.removeItem('celestialShrineGame');
+                document.getElementById('gameScreen').style.display = 'none';
+                player = { name: '', class: '', health: 100, maxHealth: 100, energy: 50, maxEnergy: 50, inventory: [], location: 'village', storyProgress: 0 };
+            }
+        }
+
+        function saveGame() {
+            localStorage.setItem('celestialShrineGame', JSON.stringify(player));
+        }
+
+        function updateGameScreen() {
+            const loc = locations[player.location];
+            document.getElementById('locationTitle').textContent = loc.title;
+            document.getElementById('storyText').textContent = loc.description;
+            document.getElementById('playerName').textContent = player.name;
+            document.getElementById('playerClass').textContent = player.class === 'warrior' ? '战士' : player.class === 'mage' ? '魔法师' : '治疗师';
+            document.getElementById('playerHealth').textContent = player.health;
+            document.getElementById('playerEnergy').textContent = player.energy;
+            document.getElementById('playerInventory').textContent = player.inventory.length ? player.inventory.join(', ') : '无';
+
+            const actionButtons = document.getElementById('actionButtons');
+            actionButtons.innerHTML = '';
+            loc.actions.forEach(action => {
+                const btn = document.createElement('button');
+                btn.className = 'action-card bg-gray-50 p-4 rounded-lg shadow-md text-center';
+                btn.textContent = action.text;
+                btn.onclick = action.action;
+                actionButtons.appendChild(btn);
+            });
+            saveGame();
+        }
+
+        function changeLocation(newLocation) {
+            player.location = newLocation;
+            updateGameScreen();
+        }
+
+        function addItem(item) {
+            player.inventory.push(item);
+            alert(`获得物品：${item === 'healingHerb' ? '治疗草药' : '神秘护符'}`);
+            updateGameScreen();
+        }
+
+        function boostEnergy(amount) {
+            player.energy = Math.min(player.energy + amount, player.maxEnergy);
+            alert(`能量恢复 +${amount}！`);
+            updateGameScreen();
+        }
+
+        function showDialogue(text, choices) {
+            const modal = document.getElementById('dialogModal');
+            const dialogText = document.getElementById('dialogText');
+            const dialogChoices = document.getElementById('dialogChoices');
+            dialogText.textContent = text;
+            dialogChoices.innerHTML = '';
+            choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = 'bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600';
+                btn.textContent = choice.text;
+                btn.onclick = () => { choice.action(); closeModal(); };
+                dialogChoices.appendChild(btn);
+            });
+            modal.classList.remove('hidden');
+        }
+
+        function startDialogue(dialogueId) {
+            const dialogue = dialogues[dialogueId];
+            showDialogue(dialogue.text, dialogue.choices);
+        }
+
+        function startCombat(enemyId) {
+            currentEnemy = { ...enemies[enemyId] };
+            updateCombatScreen();
+            document.getElementById('combatModal').classList.remove('hidden');
+        }
+
+        function updateCombatScreen() {
+            const combatText = document.getElementById('combatText');
+            const enemyHealth = document.getElementById('enemyHealth');
+            const combatActions = document.getElementById('combatActions');
+            combatText.textContent = `你在与${currentEnemy.name}战斗！选择你的行动。`;
+            enemyHealth.textContent = currentEnemy.health;
+            combatActions.innerHTML = '';
+
+            const actions = [
+                { text: '攻击', action: () => playerAttack(15) },
+                { text: '防御', action: playerDefend },
+                { text: player.class === 'healer' ? '治疗术' : player.class === 'mage' ? '火球术' : '重击', action: () => playerAbility() }
+            ];
+
+            if (player.inventory.includes('healingHerb')) {
+                actions.push({ text: '使用治疗草药', action: () => useItem('healingHerb') });
+            }
+
+            actions.forEach(action => {
+                const btn = document.createElement('button');
+                btn.className = 'bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600';
+                btn.textContent = action.text;
+                btn.onclick = action.action;
+                combatActions.appendChild(btn);
+            });
+        }
+
+        function playerAttack(damage) {
+            currentEnemy.health -= damage;
+            alert(`你对${currentEnemy.name}造成${damage}点伤害！`);
+            if (currentEnemy.health <= 0) {
+                alert(`你击败了${currentEnemy.name}！`);
+                closeModal();
+                player.storyProgress++;
+                updateGameScreen();
+                return;
+            }
+            enemyAttack();
+        }
+
+        function playerDefend() {
+            alert('你采取防御姿态，减少下次受到的伤害！');
+            enemyAttack(0.5);
+        }
+
+        function playerAbility() {
+            const ability = classAbilities[player.class];
+            if (player.energy < ability.energyCost) {
+                alert('能量不足！');
+                return;
+            }
+            player.energy -= ability.energyCost;
+            if (player.class === 'healer') {
+                player.health = Math.min(player.health + ability.heal, player.maxHealth);
+                alert(`你使用${ability.name}，恢复${ability.heal}生命值！`);
+            } else {
+                currentEnemy.health -= ability.damage;
+                alert(`你使用${ability.name}，对${currentEnemy.name}造成${ability.damage}点伤害！`);
+            }
+            if (currentEnemy.health <= 0) {
+                alert(`你击败了${currentEnemy.name}！`);
+                closeModal();
+                player.storyProgress++;
+                updateGameScreen();
+                return;
+            }
+            updateGameScreen();
+            enemyAttack();
+        }
+
+        function useItem(item) {
+            if (item === 'healingHerb') {
+                player.health = Math.min(player.health + 30, player.maxHealth);
+                player.inventory = player.inventory.filter(i => i !== 'healingHerb');
+                alert('使用治疗草药，恢复30生命值！');
+            }
+            updateGameScreen();
+            enemyAttack();
+        }
+
+        function enemyAttack(damageMultiplier = 1) {
+            const damage = Math.floor(currentEnemy.attack * damageMultiplier);
+            player.health -= damage;
+            alert(`${currentEnemy.name}对你造成${damage}点伤害！`);
+            if (player.health <= 0) {
+                alert('你被击败了！游戏结束。');
+                closeModal();
+                resetGame();
+                return;
+            }
+            updateCombatScreen();
+        }
+
+        function closeModal() {
+            document.getElementById('dialogModal').classList.add('hidden');
+            document.getElementById('combatModal').classList.add('hidden');
+            updateGameScreen();
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
