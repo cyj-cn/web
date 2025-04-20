@@ -22,7 +22,7 @@
             background-image: url('./sanr.jpg');
             background-size: cover;
             background-repeat: repeat;
-            background-opacity: 0.2;
+            opacity: 0.9;
         }
         .file-card:hover {
             transform: scale(1.05);
@@ -58,7 +58,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(255, 255, 255, 0.7); /* 透明遮罩，提升文字可读性 */
+            background: rgba(255, 255, 255, 0.7); /* Transparent overlay for text readability */
             z-index: 1;
         }
         .header-bg > * {
@@ -77,10 +77,16 @@
             0% { transform: translateY(-100vh) rotate(0deg); }
             100% { transform: translateY(100vh) rotate(360deg); }
         }
+        .no-results {
+            text-align: center;
+            color: #666;
+            font-size: 1.2rem;
+            margin-top: 1rem;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-r from-pink-100 to-blue-100 flex flex-col items-center justify-center min-h-screen relative overflow-hidden">
-    <!-- Sar.jpg decorations -->
+    <!-- Decorative elements using sar.jpg -->
     <div class="sar-decoration" style="left: 10%; animation-delay: 0s;"></div>
     <div class="sar-decoration" style="left: 30%; animation-delay: 1s;"></div>
     <div class="sar-decoration" style="left: 50%; animation-delay: 2s;"></div>
@@ -96,7 +102,7 @@
     <main class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-4xl relative z-10">
         <section class="mb-6">
             <h2 class="text-2xl font-semibold mb-4">搜索文件</h2>
-            <input type="text" id="searchInput" placeholder="输入文件名搜索..." class="w-full p-2 border rounded mb-4" oninput="searchFiles()">
+            <input type="text" id="searchInput" placeholder="输入文件名、类型（如jpg、mp4）或日期（如2025）..." class="w-full p-2 border rounded mb-4" oninput="debouncedSearch()">
             <button onclick="clearStorage()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">清除所有历史</button>
         </section>
 
@@ -115,13 +121,22 @@
     </div>
 
     <footer class="mt-8 text-gray-600 relative z-10">
-        <span>© 2025 文件管理平台. cyj保留所有权利.</span>
+        <span>© 2025 文件管理平台. 保留所有权利.</span>
     </footer>
 
     <script>
         let db;
+        let searchTimeout;
 
-        // 初始化 IndexedDB
+        // Debounce search to prevent excessive filtering
+        function debounce(func, wait) {
+            return function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(func, wait);
+            };
+        }
+
+        // Initialize IndexedDB
         const request = indexedDB.open('FileStorage', 1);
         request.onupgradeneeded = function(event) {
             db = event.target.result;
@@ -129,7 +144,7 @@
         };
         request.onsuccess = function(event) {
             db = event.target.result;
-            loadFiles(); // 页面加载时显示文件
+            loadFiles(); // Load files on page load
         };
         request.onerror = function(event) {
             alert('无法初始化数据库，请检查浏览器设置！');
@@ -143,12 +158,23 @@
             const request = store.getAll();
 
             request.onsuccess = function() {
-                const files = request.result.filter(file => 
-                    file.name?.toLowerCase().includes(filter.toLowerCase()) || filter === ''
-                );
-                fileListContent.innerHTML = ''; // 清空文件列表
+                const files = request.result.filter(file => {
+                    if (!filter) return true;
+                    const searchText = filter.toLowerCase();
+                    const name = (file.name || '未命名文件').toLowerCase();
+                    const type = file.fileType?.toLowerCase() || '';
+                    const timestamp = file.timestamp ? new Date(file.timestamp).toLocaleString().toLowerCase() : '';
+                    return name.includes(searchText) || type.includes(searchText) || timestamp.includes(searchText);
+                });
+
+                fileListContent.innerHTML = ''; // Clear file list
+                if (files.length === 0) {
+                    fileListContent.innerHTML = '<p class="no-results">没有找到匹配的文件</p>';
+                    return;
+                }
+
                 files.forEach(file => {
-                    // 验证文件类型，防止非法数据
+                    // Validate file type to prevent invalid data
                     if (!['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'video/webm'].includes(file.fileType)) {
                         console.warn('跳过非法文件类型:', file);
                         return;
@@ -164,6 +190,7 @@
                     } else if (file.fileType.startsWith('video/')) {
                         element = document.createElement('video');
                         element.src = file.dataUrl;
+                        element.type = file.fileType; // Set MIME type
                         element.controls = true;
                         element.alt = file.name || '已保存的视频';
                     }
@@ -199,40 +226,80 @@
             };
         }
 
-        function searchFiles() {
+        const debouncedSearch = debounce(() => {
             const searchInput = document.getElementById('searchInput').value;
             loadFiles(searchInput);
-        }
+        }, 300);
 
         function showPreview(file) {
             const modal = document.getElementById('previewModal');
             const modalContent = document.getElementById('modalContent');
-            let element;
-            if (file.fileType.startsWith('image/')) {
-                element = document.createElement('img');
-                element.src = file.dataUrl;
-                element.alt = file.name || '预览图片';
-            } else if (file.fileType.startsWith('video/')) {
-                element = document.createElement('video');
-                element.src = file.dataUrl;
-                element.controls = true;
-                element.alt = file.name || '预览视频';
+
+            // Validate dataUrl
+            if (!file.dataUrl || !file.dataUrl.startsWith('data:')) {
+                alert('无法预览文件：无效的数据格式');
+                return;
             }
-            modalContent.innerHTML = '';
-            modalContent.appendChild(element);
-            modal.classList.remove('hidden');
+
+            let element;
+            try {
+                if (file.fileType.startsWith('image/')) {
+                    element = document.createElement('img');
+                    element.src = file.dataUrl;
+                    element.alt = file.name || '预览图片';
+                } else if (file.fileType.startsWith('video/')) {
+                    element = document.createElement('video');
+                    element.src = file.dataUrl;
+                    element.type = file.fileType; // Set MIME type
+                    element.controls = true;
+                    element.alt = file.name || '预览视频';
+                    element.onerror = () => {
+                        alert('无法播放视频：文件可能损坏或格式不受支持');
+                    };
+                } else {
+                    throw new Error('不支持的文件类型');
+                }
+
+                modalContent.innerHTML = '';
+                modalContent.appendChild(element);
+                modal.classList.remove('hidden');
+
+                // Auto-play video if applicable
+                if (element.tagName === 'VIDEO') {
+                    element.play().catch(() => {
+                        console.warn('视频自动播放失败，可能需要用户交互');
+                    });
+                }
+            } catch (error) {
+                alert('预览失败：' + error.message);
+                console.error('Preview error:', error);
+            }
         }
 
         function closeModal() {
             const modal = document.getElementById('previewModal');
             modal.classList.add('hidden');
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = ''; // Clear content to free memory
         }
 
+        // Close modal on Esc key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+
         function downloadFile(file) {
-            const a = document.createElement('a');
-            a.href = file.dataUrl;
-            a.download = file.name || `file-${file.id}.${file.fileType.split('/')[1]}`;
-            a.click();
+            try {
+                const a = document.createElement('a');
+                a.href = file.dataUrl;
+                a.download = file.name || `file-${file.id}.${file.fileType.split('/')[1]}`;
+                a.click();
+            } catch (error) {
+                alert('下载失败：' + error.message);
+                console.error('Download error:', error);
+            }
         }
 
         function deleteFile(id) {
@@ -261,6 +328,7 @@
                 request.onsuccess = function() {
                     document.getElementById('fileListContent').innerHTML = '';
                     document.getElementById('searchInput').value = '';
+                    loadFiles();
                     alert('已清除所有上传历史！');
                 };
                 request.onerror = function() {
