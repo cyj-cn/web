@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="安全的图片和视频上传平台，支持本地文件上传，界面简洁，操作方便">
-    <meta name="keywords" content="图片上传,视频上传,文件上传,安全上传">
+    <meta name="description" content="安全的图片和视频上传平台，支持本地文件上传，数据持久保存，界面简洁">
+    <meta name="keywords" content="图片上传,视频上传,文件上传,安全上传,持久存储">
     <meta name="author" content="Your Name">
     <title>安全文件上传平台</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- SEO: Open Graph Meta Tags -->
     <meta property="og:title" content="安全文件上传平台">
-    <meta property="og:description" content="安全的图片和视频上传平台，支持本地文件上传">
+    <meta property="og:description" content="安全的图片和视频上传平台，支持本地文件上传和持久保存">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://yourwebsite.com">
     <style>
@@ -26,14 +26,17 @@
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen">
     <header class="text-center mb-8">
         <h1 class="text-4xl font-bold text-gray-800">安全文件上传平台</h1>
-        <p class="text-gray-600 mt-2">支持图片和视频上传，安全可靠</p>
+        <p class="text-gray-600 mt-2">支持图片和视频上传，数据持久保存</p>
     </header>
 
     <main class="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
         <section class="mb-6">
             <h2 class="text-2xl font-semibold mb-4">上传图片或视频</h2>
             <input type="file" id="fileInput" accept="image/*,video/*" class="mb-4 w-full p-2 border rounded">
-            <button onclick="uploadFile()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">上传</button>
+            <div class="flex space-x-4">
+                <button onclick="uploadFile()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">上传</button>
+                <button onclick="clearStorage()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">清除历史</button>
+            </div>
         </section>
 
         <section id="preview" class="preview-container">
@@ -43,10 +46,15 @@
     </main>
 
     <footer class="mt-8 text-gray-600">
-        <p>&copy; 2025 安全文件上传平台. 保留所有权利.</p>
+        <p>© 2025 安全文件上传平台. 保留所有权利.</p>
     </footer>
 
     <script>
+        // 页面加载时显示已保存的文件
+        window.onload = function() {
+            loadSavedFiles();
+        };
+
         function uploadFile() {
             const fileInput = document.getElementById('fileInput');
             const previewContent = document.getElementById('previewContent');
@@ -65,14 +73,14 @@
                 return;
             }
 
-            // 文件大小限制 (10MB)
-            const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+            // 文件大小限制 (2MB to ensure localStorage compatibility)
+            const maxSize = 2 * 1024 * 1024; // 2MB in bytes
             if (file.size > maxSize) {
-                alert('文件大小不能超过10MB！');
+                alert('文件大小不能超过2MB！');
                 return;
             }
 
-            // 显示预览
+            // 读取文件并保存
             const reader = new FileReader();
             reader.onload = function(e) {
                 const url = e.target.result;
@@ -89,10 +97,51 @@
                     element.alt = '上传的视频';
                 }
 
-                previewContent.innerHTML = ''; // 清空之前的预览
+                // 保存到localStorage
+                saveFileToStorage(url, file.type);
+
+                // 清空之前的预览并显示新上传的文件
+                previewContent.innerHTML = '';
                 previewContent.appendChild(element);
             };
             reader.readAsDataURL(file);
+        }
+
+        function saveFileToStorage(dataUrl, fileType) {
+            // 获取现有文件列表
+            let savedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+            // 添加新文件
+            savedFiles = [{ dataUrl, fileType }]; // 只保留最新文件，防止localStorage溢出
+            localStorage.setsetItem('uploadedFiles', JSON.stringify(savedFiles));
+        }
+
+        function loadSavedFiles() {
+            const previewContent = document.getElementById('previewContent');
+            const savedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+
+            previewContent.innerHTML = ''; // 清空预览区域
+            savedFiles.forEach(file => {
+                let element;
+                if (file.fileType.startsWith('image/')) {
+                    element = document.createElement('img');
+                    element.src = file.dataUrl;
+                    element.alt = '已保存的图片';
+                } else if (file.fileType.startsWith('video/')) {
+                    element = document.createElement('video');
+                    element.src = file.dataUrl;
+                    element.controls = true;
+                    element.alt = '已保存的视频';
+                }
+                previewContent.appendChild(element);
+            });
+        }
+
+        function clearStorage() {
+            if (confirm('确定要清除所有上传历史吗？')) {
+                localStorage.removeItem('uploadedFiles');
+                document.getElementById('previewContent').innerHTML = '';
+                alert('已清除所有上传历史！');
+            }
         }
     </script>
 </body>
