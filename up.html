@@ -1,35 +1,43 @@
+
+
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="安全的图片和视频上传平台，支持本地文件上传、预览和持久保存，界面简洁">
-    <meta name="keywords" content="图片上传,视频上传,文件上传,安全上传,文件预览,持久存储">
+    <meta name="description" content="安全的图片和视频上传平台，支持高达50MB的本地文件上传、预览、持久保存和历史文件浏览，界面简洁，托管于GitHub Pages">
+    <meta name="keywords" content="图片上传,视频上传,文件上传,安全上传,文件预览,持久存储,历史文件,GitHub Pages">
     <meta name="author" content="Your Name">
     <title>安全文件上传平台</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- SEO: Open Graph Meta Tags -->
     <meta property="og:title" content="安全文件上传平台">
-    <meta property="og:description" content="安全的图片和视频上传平台，支持本地文件上传、预览和持久保存">
+    <meta property="og:description" content="安全的图片和视频上传平台，支持高达50MB的本地文件上传、预览、持久保存和历史文件浏览">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://yourwebsite.com">
+    <meta property="og:url" content="https://yourusername.github.io/your-repo">
     <style>
         .preview-container img, .preview-container video {
-            max-width: 300px;
-            max-height: 300px;
+            max-width: 150px;
+            max-height: 150px;
             object-fit: contain;
             margin: 10px;
+        }
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
         }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen">
     <header class="text-center mb-8">
         <h1 class="text-4xl font-bold text-gray-800">安全文件上传平台</h1>
-        <p class="text-gray-600 mt-2">支持图片和视频上传、预览和持久保存</p>
+        <p class="text-gray-600 mt-2">支持高达50MB的图片和视频上传、预览、持久保存和历史浏览</p>
     </header>
 
-    <main class="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
+    <main class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl">
         <section class="mb-6">
             <h2 class="text-2xl font-semibold mb-4">上传图片或视频</h2>
             <input type="file" id="fileInput" accept="image/*,video/*" class="mb-4 w-full p-2 border rounded" onchange="previewFile()">
@@ -46,7 +54,7 @@
 
         <section id="savedFiles" class="preview-container">
             <h3 class="text-xl font-semibold mb-2">已保存的文件</h3>
-            <div id="savedFilesContent" class="flex flex-wrap"></div>
+            <div id="savedFilesContent" class="file-grid"></div>
         </section>
     </main>
 
@@ -56,10 +64,21 @@
 
     <script>
         let currentFile = null; // 存储当前预览的文件
+        let db; // IndexedDB 数据库实例
 
-        // 页面加载时显示已保存的文件
-        window.onload = function() {
-            loadSavedFiles();
+        // 初始化 IndexedDB
+        const request = indexedDB.open('FileStorage', 1);
+        request.onupgradeneeded = function(event) {
+            db = event.target.result;
+            db.createObjectStore('files', { keyPath: 'id', autoIncrement: true });
+        };
+        request.onsuccess = function(event) {
+            db = event.target.result;
+            loadSavedFiles(); // 页面加载时显示已保存的文件
+        };
+        request.onerror = function(event) {
+            alert('无法初始化数据库，请检查浏览器设置！');
+            console.error('IndexedDB error:', event.target.error);
         };
 
         function previewFile() {
@@ -83,10 +102,10 @@
                 return;
             }
 
-            // 文件大小限制 (100MB to ensure localStorage compatibility)
-            const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+            // 文件大小限制 (50MB)
+            const maxSize = 50 * 1024 * 1024; // 50MB in bytes
             if (file.size > maxSize) {
-                alert('文件大小不能超过100MB！');
+                alert('文件大小不能超过50MB！为优化性能，建议上传较小文件。');
                 fileInput.value = ''; // 清空输入
                 previewSection.classList.add('hidden');
                 return;
@@ -112,25 +131,34 @@
                 previewContent.innerHTML = ''; // 清空之前的预览
                 previewContent.appendChild(element);
                 previewSection.classList.remove('hidden');
-                currentFile = { dataUrl: url, fileType: file.type };
+                currentFile = { dataUrl: url, fileType: file.type, name: file.name, timestamp: new Date().toISOString() };
+            };
+            reader.onerror = function() {
+                alert('读取文件失败，请检查文件是否有效或尝试更小文件！');
+                console.error('FileReader error:', reader.error);
             };
             reader.readAsDataURL(file);
         }
 
-        function confirmUpload() {
+        async function confirmUpload() {
             if (!currentFile) {
                 alert('没有文件可上传！');
                 return;
             }
 
-            // 保存到localStorage
-            saveFileToStorage(currentFile.dataUrl, currentFile.fileType);
+            try {
+                // 保存到IndexedDB
+                await saveFileToIndexedDB(currentFile);
 
-            // 清空预览和输入
-            cancelPreview();
+                // 清空预览和输入
+                cancelPreview();
 
-            // 刷新已保存文件列表
-            loadSavedFiles();
+                // 刷新已保存文件列表
+                loadSavedFiles();
+            } catch (e) {
+                alert('保存文件失败：' + e.message + '。请检查磁盘空间或尝试更小文件。');
+                console.error('Save error:', e);
+            }
         }
 
         function cancelPreview() {
@@ -144,44 +172,81 @@
             currentFile = null; // 重置当前文件
         }
 
-        function saveFileToStorage(dataUrl, fileType) {
-            // 获取现有文件列表
-            let savedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
-            // 添加新文件（只保留最新文件，防止localStorage溢出）
-            savedFiles = [{ dataUrl, fileType }];
-            localStorage.setItem('uploadedFiles', JSON.stringify(savedFiles));
+        function saveFileToIndexedDB(file) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['files'], 'readwrite');
+                const store = transaction.objectStore('files');
+                const request = store.add(file);
+
+                request.onsuccess = function() {
+                    resolve();
+                };
+                request.onerror = function() {
+                    reject(new Error('无法保存文件到IndexedDB：' + request.error));
+                };
+            });
         }
 
         function loadSavedFiles() {
             const savedFilesContent = document.getElementById('savedFilesContent');
-            const savedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+            const transaction = db.transaction(['files'], 'readonly');
+            const store = transaction.objectStore('files');
+            const request = store.getAll();
 
-            savedFilesContent.innerHTML = ''; // 清空已保存文件区域
-            savedFiles.forEach(file => {
-                let element;
-                if (file.fileType.startsWith('image/')) {
-                    element = document.createElement('img');
-                    element.src = file.dataUrl;
-                    element.alt = '已保存的图片';
-                } else if (file.fileType.startsWith('video/')) {
-                    element = document.createElement('video');
-                    element.src = file.dataUrl;
-                    element.controls = true;
-                    element.alt = '已保存的视频';
-                }
-                savedFilesContent.appendChild(element);
-            });
+            request.onsuccess = function() {
+                const savedFiles = request.result;
+                savedFilesContent.innerHTML = ''; // 清空已保存文件区域
+                savedFiles.forEach(file => {
+                    const container = document.createElement('div');
+                    container.className = 'text-center';
+                    let element;
+                    if (file.fileType.startsWith('image/')) {
+                        element = document.createElement('img');
+                        element.src = file.dataUrl;
+                        element.alt = file.name || '已保存的图片';
+                    } else if (file.fileType.startsWith('video/')) {
+                        element = document.createElement('video');
+                        element.src = file.dataUrl;
+                        element.controls = true;
+                        element.alt = file.name || '已保存的视频';
+                    }
+                    const name = document.createElement('p');
+                    name.textContent = file.name || '未命名文件';
+                    name.className = 'text-sm text-gray-600';
+                    const timestamp = document.createElement('p');
+                    timestamp.textContent = new Date(file.timestamp).toLocaleString();
+                    timestamp.className = 'text-sm text-gray-500';
+                    container.appendChild(element);
+                    container.appendChild(name);
+                    container.appendChild(timestamp);
+                    savedFilesContent.appendChild(container);
+                });
+            };
+            request.onerror = function() {
+                alert('无法加载保存的文件：' + request.error);
+                console.error('Load error:', request.error);
+            };
         }
 
         function clearStorage() {
             if (confirm('确定要清除所有上传历史吗？')) {
-                localStorage.removeItem('uploadedFiles');
-                document.getElementById('savedFilesContent').innerHTML = '';
-                cancelPreview(); // 清除预览
-                alert('已清除所有上传历史！');
+                const transaction = db.transaction(['files'], 'readwrite');
+                const store = transaction.objectStore('files');
+                const request = store.clear();
+
+                request.onsuccess = function() {
+                    document.getElementById('savedFilesContent').innerHTML = '';
+                    cancelPreview(); // 清除预览
+                    alert('已清除所有上传历史！');
+                };
+                request.onerror = function() {
+                    alert('清除历史失败：' + request.error);
+                    console.error('Clear error:', request.error);
+                };
             }
         }
     </script>
+
 
 <script type="text/javascript">
 document.addEventListener('click',function(e){
@@ -199,6 +264,6 @@ behavior: "smooth"
 });
 </script>
 
-    </body>
-</html>
 
+</body>
+</html>
