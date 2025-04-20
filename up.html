@@ -3,38 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="安全的图片和视频上传平台，支持本地文件上传、预览、持久保存和历史文件浏览，界面简洁">
-    <meta name="keywords" content="图片上传,视频上传,文件上传,安全上传,文件预览,持久存储,历史文件">
+    <meta name="description" content="安全的图片和视频上传平台，支持本地文件上传、预览和持久保存，界面简洁">
+    <meta name="keywords" content="图片上传,视频上传,文件上传,安全上传,文件预览,持久存储">
     <meta name="author" content="Your Name">
     <title>安全文件上传平台</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- SEO: Open Graph Meta Tags -->
     <meta property="og:title" content="安全文件上传平台">
-    <meta property="og:description" content="安全的图片和视频上传平台，支持本地文件上传、预览、持久保存和历史文件浏览">
+    <meta property="og:description" content="安全的图片和视频上传平台，支持本地文件上传、预览和持久保存">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://yourwebsite.com">
     <style>
         .preview-container img, .preview-container video {
-            max-width: 150px;
-            max-height: 150px;
+            max-width: 300px;
+            max-height: 300px;
             object-fit: contain;
             margin: 10px;
-        }
-        .file-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 10px;
         }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen">
     <header class="text-center mb-8">
         <h1 class="text-4xl font-bold text-gray-800">安全文件上传平台</h1>
-        <p class="text-gray-600 mt-2">支持图片和视频上传、预览、持久保存和历史浏览</p>
+        <p class="text-gray-600 mt-2">支持图片和视频上传、预览和持久保存</p>
     </header>
 
-    <main class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl">
+    <main class="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
         <section class="mb-6">
             <h2 class="text-2xl font-semibold mb-4">上传图片或视频</h2>
             <input type="file" id="fileInput" accept="image/*,video/*" class="mb-4 w-full p-2 border rounded" onchange="previewFile()">
@@ -46,15 +41,12 @@
                     <button onclick="cancelPreview()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">取消</button>
                 </div>
             </div>
-            <div class="flex space-x-4">
-                <button onclick="exportFiles()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">导出文件列表</button>
-                <button onclick="clearStorage()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">清除历史</button>
-            </div>
+            <button onclick="clearStorage()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">清除历史</button>
         </section>
 
         <section id="savedFiles" class="preview-container">
             <h3 class="text-xl font-semibold mb-2">已保存的文件</h3>
-            <div id="savedFilesContent" class="file-grid"></div>
+            <div id="savedFilesContent" class="flex flex-wrap"></div>
         </section>
     </main>
 
@@ -91,10 +83,10 @@
                 return;
             }
 
-            // 文件大小限制 (30MB)
-            const maxSize = 30 * 1024 * 1024; // 30MB in bytes
+            // 文件大小限制 (2MB to ensure localStorage compatibility)
+            const maxSize = 2 * 1024 * 1024; // 2MB in bytes
             if (file.size > maxSize) {
-                alert('文件大小不能超过30MB！');
+                alert('文件大小不能超过2MB！');
                 fileInput.value = ''; // 清空输入
                 previewSection.classList.add('hidden');
                 return;
@@ -120,7 +112,7 @@
                 previewContent.innerHTML = ''; // 清空之前的预览
                 previewContent.appendChild(element);
                 previewSection.classList.remove('hidden');
-                currentFile = { dataUrl: url, fileType: file.type, name: file.name, timestamp: new Date().toISOString() };
+                currentFile = { dataUrl: url, fileType: file.type };
             };
             reader.readAsDataURL(file);
         }
@@ -131,22 +123,14 @@
                 return;
             }
 
-            try {
-                // 保存到localStorage
-                saveFileToStorage(currentFile);
+            // 保存到localStorage
+            saveFileToStorage(currentFile.dataUrl, currentFile.fileType);
 
-                // 清空预览和输入
-                cancelPreview();
+            // 清空预览和输入
+            cancelPreview();
 
-                // 刷新已保存文件列表
-                loadSavedFiles();
-            } catch (e) {
-                if (e.name === 'QuotaExceededError') {
-                    alert('存储空间不足！请清除一些历史文件后再试。');
-                } else {
-                    alert('保存文件时出错：' + e.message);
-                }
-            }
+            // 刷新已保存文件列表
+            loadSavedFiles();
         }
 
         function cancelPreview() {
@@ -160,12 +144,11 @@
             currentFile = null; // 重置当前文件
         }
 
-        function saveFileToStorage(file) {
+        function saveFileToStorage(dataUrl, fileType) {
             // 获取现有文件列表
             let savedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
-            // 添加新文件
-            savedFiles.push(file);
-            // 保存到localStorage
+            // 添加新文件（只保留最新文件，防止localStorage溢出）
+            savedFiles = [{ dataUrl, fileType }];
             localStorage.setItem('uploadedFiles', JSON.stringify(savedFiles));
         }
 
@@ -175,29 +158,18 @@
 
             savedFilesContent.innerHTML = ''; // 清空已保存文件区域
             savedFiles.forEach(file => {
-                const container = document.createElement('div');
-                container.className = 'text-center';
                 let element;
                 if (file.fileType.startsWith('image/')) {
                     element = document.createElement('img');
                     element.src = file.dataUrl;
-                    element.alt = file.name || '已保存的图片';
+                    element.alt = '已保存的图片';
                 } else if (file.fileType.startsWith('video/')) {
                     element = document.createElement('video');
                     element.src = file.dataUrl;
                     element.controls = true;
-                    element.alt = file.name || '已保存的视频';
+                    element.alt = '已保存的视频';
                 }
-                const name = document.createElement('p');
-                name.textContent = file.name || '未命名文件';
-                name.className = 'text-sm text-gray-600';
-                const timestamp = document.createElement('p');
-                timestamp.textContent = new Date(file.timestamp).toLocaleString();
-                timestamp.className = 'text-sm text-gray-500';
-                container.appendChild(element);
-                container.appendChild(name);
-                container.appendChild(timestamp);
-                savedFilesContent.appendChild(container);
+                savedFilesContent.appendChild(element);
             });
         }
 
@@ -208,26 +180,6 @@
                 cancelPreview(); // 清除预览
                 alert('已清除所有上传历史！');
             }
-        }
-
-        function exportFiles() {
-            const savedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
-            if (savedFiles.length === 0) {
-                alert('没有文件可导出！');
-                return;
-            }
-
-            // 生成JSON文件
-            const jsonData = JSON.stringify(savedFiles, null, 2);
-            const blob = new Blob([jsonData], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'uploaded_files.json';
-            a.click();
-            URL.revokeObjectURL(url);
-
-            alert('文件列表已导出为JSON！请手动上传到GitHub（见下方说明）。');
         }
     </script>
 
@@ -247,8 +199,6 @@ behavior: "smooth"
 });
 </script>
 
-
-</body>
+    </body>
 </html>
-
 
