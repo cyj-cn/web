@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="文件管理平台，查看、搜索、下载和删除已上传的图片和视频，安全可靠，托管于GitHub Pages">
+    <meta name="keywords" content="文件管理,图片查看,视频管理,文件搜索,文件下载,安全管理,日本风格,樱花,GitHub Pages">
+    <meta name="author" content="Your Name">
+    <!-- Content Security Policy for security -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://cdn.tailwindcss.com; script-src 'self'; img-src 'self' data:; media-src 'self' data:">
+    <title>文件管理平台 - 日本风格</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SEO: Open Graph Meta Tags -->
+    <meta property="og:title" content="文件管理平台 - 日本风格">
+    <meta property="og:description" content="华丽的日本风格文件管理平台，查看、搜索、下载和删除已上传的图片和视频">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yourusername.github.io/your-repo/manage.html">
+    <style>
+        .file-card {
+            transition: transform 0.2s ease-in-out;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50,10 A40,40 0 0,1 90,50 A40,40 0 0,1 50,90 A40,40 0 0,1 10,50 A40,40 0 0,1 50,10 M50,20 A30,30 0 0,0 20,50 A30,30 0 0,0 50,80 A30,30 0 0,0 80,50 A30,30 0 0,0 50,20' fill='%23E0F7FA' opacity='0.2'/%3E%3C/svg%3E");
+            background-size: 50px;
+        }
+        .file-card:hover {
+            transform: scale(1.05);
+        }
+        .modal {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .file-grid img, .file-grid video {
+            max-width: 150px;
+            max-height: 150px;
+            object-fit: contain;
+            margin: 10px auto;
+        }
+        .modal-content img, .modal-content video {
+            max-width: 90vw;
+            max-height: 80vh;
+            object-fit: contain;
+        }
+        .sakura-bg {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50,20 C60,10 70,20 70,30 C70,40 60,50 50,50 C40,50 30,40 30,30 C30,20 40,10 50,20' fill='none' stroke='%23FF99CC' stroke-width='2'/%3E%3C/svg%3E");
+            background-size: 50px;
+            background-repeat: repeat;
+            opacity: 0.3;
+        }
+        .sakura-petal {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10,2 C12,0 15,2 15,5 C15,8 12,10 10,10 C8,10 5,8 5,5 C5,2 8,0 10,2' fill='%23FF99CC'/%3E%3C/svg%3E");
+            animation: fall 5s linear infinite;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-100vh) rotate(0deg); }
+            100% { transform: translateY(100vh) rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-r from-pink-100 to-blue-100 flex flex-col items-center justify-center min-h-screen relative overflow-hidden">
+    <!-- Sakura petals animation -->
+    <div class="sakura-petal" style="left: 10%; animation-delay: 0s;"></div>
+    <div class="sakura-petal" style="left: 30%; animation-delay: 1s;"></div>
+    <div class="sakura-petal" style="left: 50%; animation-delay: 2s;"></div>
+    <div class="sakura-petal" style="left: 70%; animation-delay: 3s;"></div>
+    <div class="sakura-petal" style="left: 90%; animation-delay: 4s;"></div>
+
+    <header class="text-center mb-8 sakura-bg py-6 rounded-lg relative z-10">
+        <h1 class="text-5xl font-extrabold text-gray-800 drop-shadow-lg">文件管理平台</h1>
+        <p class="text-gray-600 mt-2 text-lg">和风设计，管理你的图片和视频</p>
+        <a href="index.html" class="text-blue-500 hover:underline mt-2 inline-block">返回上传页面</a>
+    </header>
+
+    <main class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-4xl relative z-10">
+        <section class="mb-6">
+            <h2 class="text-2xl font-semibold mb-4">搜索文件</h2>
+            <input type="text" id="searchInput" placeholder="输入文件名搜索..." class="w-full p-2 border rounded mb-4" oninput="searchFiles()">
+            <button onclick="clearStorage()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">清除所有历史</button>
+        </section>
+
+        <section id="fileList" class="file-grid">
+            <h3 class="text-xl font-semibold mb-2">已保存的文件</h3>
+            <div id="fileListContent" class="file-grid"></div>
+        </section>
+    </main>
+
+    <!-- Modal for file preview -->
+    <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden modal">
+        <div class="bg-white p-4 rounded-lg modal-content relative">
+            <button onclick="closeModal()" class="absolute top-2 right-2 text-gray-600 hover:text-gray-800">✕</button>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <footer class="mt-8 text-gray-600 flex items-center relative z-10">
+        <span class="mr-2">© 2025 文件管理平台. 创业家cyj保留所有权利.</span>
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAAB/UlEQVRYw+2VvUscQRDHfxs3uVgs7iIWFmJhb4K9EBd/gf0F/gD/gf0BCwtb2Iu9iMWdIkVQUQRFRBAUEfH2jLuz82Z3Z3eFKB4Y5r1575vZmZ3dmd0B+DcAT8n4BzvAJ5kEbgE3gCngDHgCPADWvZ7T9s8BTwAnwA/gH4B94BswBtwC5oA7wB3gEfAHWAMeALeAO8Ad4BHwB1gDHgC3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7w hashes='[{"algorithm":"md5","hash":"d41d8cd98f00b204e9800998ecf8427e"}]'>
+    </footer>
+
+    <script>
+        let db;
+
+        // 初始化 IndexedDB
+        const request = indexedDB.open('FileStorage', 1);
+        request.onupgradeneeded = function(event) {
+            db = event.target.result;
+            db.createObjectStore('files', { keyPath: 'id', autoIncrement: true });
+        };
+        request.onsuccess = function(event) {
+            db = event.target.result;
+            loadFiles(); // 页面加载时显示文件
+        };
+        request.onerror = function(event) {
+            alert('无法初始化数据库，请检查浏览器设置！');
+            console.error('IndexedDB error:', event.target.error);
+        };
+
+        function loadFiles(filter = '') {
+            const fileListContent = document.getElementById('fileListContent');
+            const transaction = db.transaction(['files'], 'readonly');
+            const store = transaction.objectStore('files');
+            const request = store.getAll();
+
+            request.onsuccess = function() {
+                const files = request.result.filter(file => 
+                    file.name?.toLowerCase().includes(filter.toLowerCase()) || filter === ''
+                );
+                fileListContent.innerHTML = ''; // 清空文件列表
+                files.forEach(file => {
+                    // 验证文件类型，防止非法数据
+                    if (!['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'video/webm'].includes(file.fileType)) {
+                        console.warn('跳过非法文件类型:', file);
+                        return;
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = 'file-card bg-gray-50 p-4 rounded-lg shadow-md text-center';
+                    let element;
+                    if (file.fileType.startsWith('image/')) {
+                        element = document.createElement('img');
+                        element.src = file.dataUrl;
+                        element.alt = file.name || '已保存的图片';
+                    } else if (file.fileType.startsWith('video/')) {
+                        element = document.createElement('video');
+                        element.src = file.dataUrl;
+                        element.controls = true;
+                        element.alt = file.name || '已保存的视频';
+                    }
+                    element.onclick = () => showPreview(file);
+                    const name = document.createElement('p');
+                    name.textContent = file.name || '未命名文件';
+                    name.className = 'text-sm text-gray-600 mt-2';
+                    const timestamp = document.createElement('p');
+                    timestamp.textContent = new Date(file.timestamp).toLocaleString();
+                    timestamp.className = 'text-sm text-gray-500';
+                    const actions = document.createElement('div');
+                    actions.className = 'mt-2 flex justify-center space-x-2';
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.textContent = '下载';
+                    downloadBtn.className = 'bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600';
+                    downloadBtn.onclick = () => downloadFile(file);
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = '删除';
+                    deleteBtn.className = 'bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600';
+                    deleteBtn.onclick = () => deleteFile(file.id);
+                    actions.appendChild(downloadBtn);
+                    actions.appendChild(deleteBtn);
+                    card.appendChild(element);
+                    card.appendChild(name);
+                    card.appendChild(timestamp);
+                    card.appendChild(actions);
+                    fileListContent.appendChild(card);
+                });
+            };
+            request.onerror = function() {
+                alert('无法加载文件：' + request.error);
+                console.error('Load error:', request.error);
+            };
+        }
+
+        function searchFiles() {
+            const searchInput = document.getElementById('searchInput').value;
+            loadFiles(searchInput);
+        }
+
+        function showPreview(file) {
+            const modal = document.getElementById('previewModal');
+            const modalContent = document.getElementById('modalContent');
+            let element;
+            if (file.fileType.startsWith('image/')) {
+                element = document.createElement('img');
+                element.src = file.dataUrl;
+                element.alt = file.name || '预览图片';
+            } else if (file.fileType.startsWith('video/')) {
+                element = document.createElement('video');
+                element.src = file.dataUrl;
+                element.controls = true;
+                element.alt = file.name || '预览视频';
+            }
+            modalContent.innerHTML = '';
+            modalContent.appendChild(element);
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('previewModal');
+            modal.classList.add('hidden');
+        }
+
+        function downloadFile(file) {
+            const a = document.createElement('a');
+            a.href = file.dataUrl;
+            a.download = file.name || `file-${file.id}.${file.fileType.split('/')[1]}`;
+            a.click();
+        }
+
+        function deleteFile(id) {
+            if (confirm('确定要删除此文件吗？')) {
+                const transaction = db.transaction(['files'], 'readwrite');
+                const store = transaction.objectStore('files');
+                const request = store.delete(id);
+
+                request.onsuccess = function() {
+                    loadFiles(document.getElementById('searchInput').value);
+                    alert('文件已删除！');
+                };
+                request.onerror = function() {
+                    alert('删除文件失败：' + request.error);
+                    console.error('Delete error:', request.error);
+                };
+            }
+        }
+
+        function clearStorage() {
+            if (confirm('确定要清除所有上传历史吗？')) {
+                const transaction = db.transaction(['files'], 'readwrite');
+                const store = transaction.objectStore('files');
+                const request = store.clear();
+
+                request.onsuccess = function() {
+                    document.getElementById('fileListContent').innerHTML = '';
+                    document.getElementById('searchInput').value = '';
+                    alert('已清除所有上传历史！');
+                };
+                request.onerror = function() {
+                    alert('清除历史失败：' + request.error);
+                    console.error('Clear error:', request.error);
+                };
+            }
+        }
+    </script>
+</body>
+</html>
