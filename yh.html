@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="文件管理平台，查看、搜索、下载和删除已上传的图片和视频，安全可靠，托管于GitHub Pages">
-    <meta name="keywords" content="文件管理,图片查看,视频管理,文件搜索,文件下载,安全管理,日本风格,樱花,GitHub Pages">
+    <meta name="description" content="华丽的文件管理平台，查看、搜索、下载和删除已上传的图片和视频，采用自定义日本风格设计，托管于GitHub Pages">
+    <meta name="keywords" content="文件管理,图片查看,视频管理,文件搜索,文件下载,安全管理,日本风格,GitHub Pages">
     <meta name="author" content="Your Name">
     <!-- Content Security Policy for security -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://cdn.tailwindcss.com; script-src 'self'; img-src 'self' data:; media-src 'self' data:">
@@ -13,14 +13,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- SEO: Open Graph Meta Tags -->
     <meta property="og:title" content="文件管理平台 - 日本风格">
-    <meta property="og:description" content="华丽的日本风格文件管理平台，查看、搜索、下载和删除已上传的图片和视频">
+    <meta property="og:description" content="华丽的文件管理平台，查看、搜索、下载和删除已上传的图片和视频">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://yourusername.github.io/your-repo/manage.html">
     <style>
         .file-card {
             transition: transform 0.2s ease-in-out;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50,10 A40,40 0 0,1 90,50 A40,40 0 0,1 50,90 A40,40 0 0,1 10,50 A40,40 0 0,1 50,10 M50,20 A30,30 0 0,0 20,50 A30,30 0 0,0 50,80 A30,30 0 0,0 80,50 A30,30 0 0,0 50,20' fill='%23E0F7FA' opacity='0.2'/%3E%3C/svg%3E");
-            background-size: 50px;
+            background-image: url('./sanr.jpg');
+            background-size: cover;
+            background-repeat: repeat;
+            background-opacity: 0.2;
         }
         .file-card:hover {
             transform: scale(1.05);
@@ -43,18 +45,33 @@
             max-height: 80vh;
             object-fit: contain;
         }
-        .sakura-bg {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50,20 C60,10 70,20 70,30 C70,40 60,50 50,50 C40,50 30,40 30,30 C30,20 40,10 50,20' fill='none' stroke='%23FF99CC' stroke-width='2'/%3E%3C/svg%3E");
-            background-size: 50px;
-            background-repeat: repeat;
-            opacity: 0.3;
+        .header-bg {
+            background-image: url('./sar.jpg');
+            background-size: cover;
+            background-position: center;
+            position: relative;
         }
-        .sakura-petal {
+        .header-bg::before {
+            content: '';
             position: absolute;
-            width: 20px;
-            height: 20px;
-            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10,2 C12,0 15,2 15,5 C15,8 12,10 10,10 C8,10 5,8 5,5 C5,2 8,0 10,2' fill='%23FF99CC'/%3E%3C/svg%3E");
-            animation: fall 5s linear infinite;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.7); /* 透明遮罩，提升文字可读性 */
+            z-index: 1;
+        }
+        .header-bg > * {
+            position: relative;
+            z-index: 2;
+        }
+        .sar-decoration {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-image: url('./sar.jpg');
+            background-size: cover;
+            animation: fall 6s linear infinite;
         }
         @keyframes fall {
             0% { transform: translateY(-100vh) rotate(0deg); }
@@ -63,14 +80,14 @@
     </style>
 </head>
 <body class="bg-gradient-to-r from-pink-100 to-blue-100 flex flex-col items-center justify-center min-h-screen relative overflow-hidden">
-    <!-- Sakura petals animation -->
-    <div class="sakura-petal" style="left: 10%; animation-delay: 0s;"></div>
-    <div class="sakura-petal" style="left: 30%; animation-delay: 1s;"></div>
-    <div class="sakura-petal" style="left: 50%; animation-delay: 2s;"></div>
-    <div class="sakura-petal" style="left: 70%; animation-delay: 3s;"></div>
-    <div class="sakura-petal" style="left: 90%; animation-delay: 4s;"></div>
+    <!-- Sar.jpg decorations -->
+    <div class="sar-decoration" style="left: 10%; animation-delay: 0s;"></div>
+    <div class="sar-decoration" style="left: 30%; animation-delay: 1s;"></div>
+    <div class="sar-decoration" style="left: 50%; animation-delay: 2s;"></div>
+    <div class="sar-decoration" style="left: 70%; animation-delay: 3s;"></div>
+    <div class="sar-decoration" style="left: 90%; animation-delay: 4s;"></div>
 
-    <header class="text-center mb-8 sakura-bg py-6 rounded-lg relative z-10">
+    <header class="text-center mb-8 header-bg py-6 rounded-lg">
         <h1 class="text-5xl font-extrabold text-gray-800 drop-shadow-lg">文件管理平台</h1>
         <p class="text-gray-600 mt-2 text-lg">和风设计，管理你的图片和视频</p>
         <a href="index.html" class="text-blue-500 hover:underline mt-2 inline-block">返回上传页面</a>
@@ -97,9 +114,8 @@
         </div>
     </div>
 
-    <footer class="mt-8 text-gray-600 flex items-center relative z-10">
-        <span class="mr-2">© 2025 文件管理平台. 创业家cyj保留所有权利.</span>
-        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAAB/UlEQVRYw+2VvUscQRDHfxs3uVgs7iIWFmJhb4K9EBd/gf0F/gD/gf0BCwtb2Iu9iMWdIkVQUQRFRBAUEfH2jLuz82Z3Z3eFKB4Y5r1575vZmZ3dmd0B+DcAT8n4BzvAJ5kEbgE3gCngDHgCPADWvZ7T9s8BTwAnwA/gH4B94BswBtwC5oA7wB3gEfAHWAMeALeAO8Ad4BHwB1gDHgC3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7wCPgD7AGPAJuAXeAO8Aj4A+wBjwCbgF3gDvAI+APsAY8Am4Bd4A7w hashes='[{"algorithm":"md5","hash":"d41d8cd98f00b204e9800998ecf8427e"}]'>
+    <footer class="mt-8 text-gray-600 relative z-10">
+        <span>© 2025 文件管理平台. cyj保留所有权利.</span>
     </footer>
 
     <script>
