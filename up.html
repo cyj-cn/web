@@ -1,17 +1,19 @@
+
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="安全的图片和视频上传平台，支持本地文件上传，数据持久保存，界面简洁">
-    <meta name="keywords" content="图片上传,视频上传,文件上传,安全上传,持久存储">
+    <meta name="description" content="安全的图片和视频上传平台，支持本地文件上传、预览和持久保存，界面简洁">
+    <meta name="keywords" content="图片上传,视频上传,文件上传,安全上传,文件预览,持久存储">
     <meta name="author" content="Your Name">
     <title>安全文件上传平台</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- SEO: Open Graph Meta Tags -->
     <meta property="og:title" content="安全文件上传平台">
-    <meta property="og:description" content="安全的图片和视频上传平台，支持本地文件上传和持久保存">
+    <meta property="og:description" content="安全的图片和视频上传平台，支持本地文件上传、预览和持久保存">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://yourwebsite.com">
     <style>
@@ -26,22 +28,27 @@
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen">
     <header class="text-center mb-8">
         <h1 class="text-4xl font-bold text-gray-800">安全文件上传平台</h1>
-        <p class="text-gray-600 mt-2">支持图片和视频上传，数据持久保存</p>
+        <p class="text-gray-600 mt-2">支持图片和视频上传、预览和持久保存</p>
     </header>
 
     <main class="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
         <section class="mb-6">
             <h2 class="text-2xl font-semibold mb-4">上传图片或视频</h2>
-            <input type="file" id="fileInput" accept="image/*,video/*" class="mb-4 w-full p-2 border rounded">
-            <div class="flex space-x-4">
-                <button onclick="uploadFile()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">上传</button>
-                <button onclick="clearStorage()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">清除历史</button>
+            <input type="file" id="fileInput" accept="image/*,video/*" class="mb-4 w-full p-2 border rounded" onchange="previewFile()">
+            <div id="previewSection" class="preview-container mb-4 hidden">
+                <h3 class="text-lg font-semibold mb-2">文件预览</h3>
+                <div id="previewContent" class="flex flex-wrap"></div>
+                <div class="flex space-x-4">
+                    <button onclick="confirmUpload()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">确认上传</button>
+                    <button onclick="cancelPreview()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">取消</button>
+                </div>
             </div>
+            <button onclick="clearStorage()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">清除历史</button>
         </section>
 
-        <section id="preview" class="preview-container">
-            <h3 class="text-xl font-semibold mb-2">预览</h3>
-            <div id="previewContent" class="flex flex-wrap"></div>
+        <section id="savedFiles" class="preview-container">
+            <h3 class="text-xl font-semibold mb-2">已保存的文件</h3>
+            <div id="savedFilesContent" class="flex flex-wrap"></div>
         </section>
     </main>
 
@@ -50,19 +57,22 @@
     </footer>
 
     <script>
+        let currentFile = null; // 存储当前预览的文件
+
         // 页面加载时显示已保存的文件
         window.onload = function() {
             loadSavedFiles();
         };
 
-        function uploadFile() {
+        function previewFile() {
             const fileInput = document.getElementById('fileInput');
             const previewContent = document.getElementById('previewContent');
+            const previewSection = document.getElementById('previewSection');
             const file = fileInput.files[0];
 
             // 安全验证
             if (!file) {
-                alert('请选择一个文件！');
+                previewSection.classList.add('hidden');
                 return;
             }
 
@@ -70,6 +80,8 @@
             const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'video/webm'];
             if (!allowedTypes.includes(file.type)) {
                 alert('仅支持JPEG、PNG、GIF图片和MP4、WebM视频！');
+                fileInput.value = ''; // 清空输入
+                previewSection.classList.add('hidden');
                 return;
             }
 
@@ -77,10 +89,12 @@
             const maxSize = 2 * 1024 * 1024; // 2MB in bytes
             if (file.size > maxSize) {
                 alert('文件大小不能超过2MB！');
+                fileInput.value = ''; // 清空输入
+                previewSection.classList.add('hidden');
                 return;
             }
 
-            // 读取文件并保存
+            // 显示预览
             const reader = new FileReader();
             reader.onload = function(e) {
                 const url = e.target.result;
@@ -89,37 +103,62 @@
                 if (file.type.startsWith('image/')) {
                     element = document.createElement('img');
                     element.src = url;
-                    element.alt = '上传的图片';
+                    element.alt = '预览图片';
                 } else if (file.type.startsWith('video/')) {
                     element = document.createElement('video');
                     element.src = url;
                     element.controls = true;
-                    element.alt = '上传的视频';
+                    element.alt = '预览视频';
                 }
 
-                // 保存到localStorage
-                saveFileToStorage(url, file.type);
-
-                // 清空之前的预览并显示新上传的文件
-                previewContent.innerHTML = '';
+                previewContent.innerHTML = ''; // 清空之前的预览
                 previewContent.appendChild(element);
+                previewSection.classList.remove('hidden');
+                currentFile = { dataUrl: url, fileType: file.type };
             };
             reader.readAsDataURL(file);
+        }
+
+        function confirmUpload() {
+            if (!currentFile) {
+                alert('没有文件可上传！');
+                return;
+            }
+
+            // 保存到localStorage
+            saveFileToStorage(currentFile.dataUrl, currentFile.fileType);
+
+            // 清空预览和输入
+            cancelPreview();
+
+            // 刷新已保存文件列表
+            loadSavedFiles();
+        }
+
+        function cancelPreview() {
+            const fileInput = document.getElementById('fileInput');
+            const previewContent = document.getElementById('previewContent');
+            const previewSection = document.getElementById('previewSection');
+
+            fileInput.value = ''; // 清空文件输入
+            previewContent.innerHTML = ''; // 清空预览
+            previewSection.classList.add('hidden');
+            currentFile = null; // 重置当前文件
         }
 
         function saveFileToStorage(dataUrl, fileType) {
             // 获取现有文件列表
             let savedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
-            // 添加新文件
-            savedFiles = [{ dataUrl, fileType }]; // 只保留最新文件，防止localStorage溢出
-            localStorage.setsetItem('uploadedFiles', JSON.stringify(savedFiles));
+            // 添加新文件（只保留最新文件，防止localStorage溢出）
+            savedFiles = [{ dataUrl, fileType }];
+            localStorage.setItem('uploadedFiles', JSON.stringify(savedFiles));
         }
 
         function loadSavedFiles() {
-            const previewContent = document.getElementById('previewContent');
+            const savedFilesContent = document.getElementById('savedFilesContent');
             const savedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
 
-            previewContent.innerHTML = ''; // 清空预览区域
+            savedFilesContent.innerHTML = ''; // 清空已保存文件区域
             savedFiles.forEach(file => {
                 let element;
                 if (file.fileType.startsWith('image/')) {
@@ -132,14 +171,15 @@
                     element.controls = true;
                     element.alt = '已保存的视频';
                 }
-                previewContent.appendChild(element);
+                savedFilesContent.appendChild(element);
             });
         }
 
         function clearStorage() {
             if (confirm('确定要清除所有上传历史吗？')) {
                 localStorage.removeItem('uploadedFiles');
-                document.getElementById('previewContent').innerHTML = '';
+                document.getElementById('savedFilesContent').innerHTML = '';
+                cancelPreview(); // 清除预览
                 alert('已清除所有上传历史！');
             }
         }
@@ -165,3 +205,5 @@ behavior: "smooth"
     
 </body>
 </html>
+
+
